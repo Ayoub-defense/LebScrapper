@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 
@@ -47,16 +47,25 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(filters.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 
-# Frontend React (build statique)
+# Frontend React
 DIST = Path(__file__).parent.parent / "frontend" / "dist"
 
 if DIST.exists():
+    # Assets JS/CSS avec hash → cache long terme OK
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
         index = DIST / "index.html"
-        return FileResponse(index)
+        # index.html ne doit JAMAIS être mis en cache
+        return FileResponse(
+            index,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
 else:
     @app.get("/")
     async def root():
