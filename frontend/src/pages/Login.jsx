@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api, saveAuth, isLoggedIn } from '../hooks/useApi'
 
@@ -9,7 +9,12 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (isLoggedIn()) { navigate('/dashboard'); return null }
+  // ✅ FIX : redirection dans useEffect, pas pendant le render
+  useEffect(() => {
+    if (isLoggedIn()) {
+      navigate('/dashboard')
+    }
+  }, [navigate])
 
   async function handleSubmit(e) {
     e.preventDefault()
