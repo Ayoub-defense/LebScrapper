@@ -4,6 +4,8 @@ import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import Admin from './pages/Admin'
+import FAQ from './pages/FAQ'
 import { isLoggedIn } from './hooks/useApi'
 
 function PrivateRoute({ children }) {
@@ -14,11 +16,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/"          element={<Landing />} />
+        <Route path="/login"     element={<Login />} />
+        <Route path="/register"  element={<Register />} />
+        <Route path="/faq"       element={<FAQ />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="/admin"     element={<PrivateRoute><Admin /></PrivateRoute>} />
+        <Route path="*"          element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   )

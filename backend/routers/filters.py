@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from ..models.models import SearchFilter, Listing
 from ..routers.auth import get_current_user
@@ -16,7 +16,7 @@ class FilterBody(BaseModel):
     max_price: Optional[float] = None
     min_price: float = 0
     radius_km: int = 30
-    min_score: float = 8.0
+    min_score: float = Field(default=8.0, ge=1.0, le=10.0)  # ← 1 à 10 ✅
 
 
 @router.get("/")
@@ -24,15 +24,15 @@ async def list_filters(user=Depends(get_current_user)):
     filters = await SearchFilter.find(SearchFilter.user_id == str(user.id)).to_list()
     return [
         {
-            "id": str(f.id),
-            "name": f.name,
-            "keywords": f.keywords,
-            "category": f.category,
-            "city": f.city,
-            "max_price": f.max_price,
-            "min_price": f.min_price,
-            "min_score": f.min_score,
-            "is_active": f.is_active,
+            "id":           str(f.id),
+            "name":         f.name,
+            "keywords":     f.keywords,
+            "category":     f.category,
+            "city":         f.city,
+            "max_price":    f.max_price,
+            "min_price":    f.min_price,
+            "min_score":    f.min_score,
+            "is_active":    f.is_active,
             "last_scan_at": f.last_scan_at.isoformat() if f.last_scan_at else None,
         }
         for f in filters
@@ -44,7 +44,6 @@ async def create_filter(body: FilterBody, user=Depends(get_current_user)):
     count = await SearchFilter.find(SearchFilter.user_id == str(user.id)).count()
     if count >= 10:
         raise HTTPException(status_code=400, detail="Maximum 10 filtres par compte")
-
     f = SearchFilter(user_id=str(user.id), **body.dict())
     await f.insert()
     return {"id": str(f.id), "message": "Filtre créé"}

@@ -10,13 +10,12 @@ class User(Document):
     hashed_password: str
     full_name: Optional[str] = None
     is_active: bool = True
+    is_admin: bool = False
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
         name = "users"
-        indexes = [
-            IndexModel([("email", ASCENDING)], unique=True),
-        ]
+        indexes = [IndexModel([("email", ASCENDING)], unique=True)]
 
 
 class SearchFilter(Document):
@@ -28,7 +27,7 @@ class SearchFilter(Document):
     max_price: Optional[float] = None
     min_price: float = 0
     radius_km: int = 30
-    min_score: float = 8.0
+    min_score: float = 8.0   # ← peut aller de 1 à 10
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_scan_at: Optional[datetime] = None
