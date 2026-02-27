@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from ..models.models import SearchFilter, Listing
 from ..routers.auth import get_current_user
-from ..services.scraper import scan_filter
+# from ..services.scraper import scan_filter  <-- Ajoute un # devant
 
 router = APIRouter(prefix="/filters", tags=["filters"])
 
