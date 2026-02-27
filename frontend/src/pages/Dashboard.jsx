@@ -2,11 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { api, getUser, logout } from '../hooks/useApi'
 
-/* ══════════════════════════════════════════════
-   STYLES — Syne + JetBrains Mono
-   Thème : intelligence dashboard — neutre, universel
-   Accent : #7C3AED violet profond (pas de voitures)
-══════════════════════════════════════════════ */
 const STYLES = `
   :root {
     --bg: #09090b; --surface: #111118; --surface2: #18181f;
@@ -22,14 +17,11 @@ const STYLES = `
   * { font-family:'DM Sans',sans-serif; box-sizing:border-box }
   .mono { font-family:'JetBrains Mono',monospace }
   .syne { font-family:'Syne',sans-serif }
-
-  /* Fond grille */
   .grid-bg {
     background-image: linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
                       linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
     background-size: 32px 32px;
   }
-
   @keyframes slide-up  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
   @keyframes fade-in   { from{opacity:0} to{opacity:1} }
   @keyframes shimmer   { 0%{background-position:-500px 0} 100%{background-position:500px 0} }
@@ -43,27 +35,22 @@ const STYLES = `
   }
   @keyframes count-in  { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
   @keyframes banner-in { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-
   .au   { animation:slide-up .3s cubic-bezier(.2,.8,.4,1) both }
   .au2  { animation:slide-up .3s .06s cubic-bezier(.2,.8,.4,1) both }
   .au3  { animation:slide-up .3s .12s cubic-bezier(.2,.8,.4,1) both }
   .fade { animation:fade-in .2s ease both }
-
   .sk { background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);
         background-size:500px 100%;animation:shimmer 1.4s ease infinite;border-radius:8px }
   .spin-el { animation:spin .8s linear infinite }
   .colon { animation:blink 1s step-end infinite }
-
   .card { transition:border-color .2s,box-shadow .2s }
   .card:hover { border-color:var(--border2)!important }
-
   .laser-card { position:relative;overflow:hidden }
   .laser-card.active::after {
     content:'';position:absolute;top:0;bottom:0;width:80px;
     background:linear-gradient(90deg,transparent,rgba(124,58,237,.07),transparent);
     animation:scan-laser 4s ease-in-out infinite;
   }
-
   input:focus,select:focus,textarea:focus {
     border-color:var(--accent)!important;outline:none;
     box-shadow:0 0 0 3px rgba(124,58,237,.08)
@@ -71,8 +58,6 @@ const STYLES = `
   ::-webkit-scrollbar{width:3px}
   ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
   input[type=range]{accent-color:var(--accent)}
-  .platform-lbc   { color:var(--lbc) }
-  .platform-vinted{ color:var(--vinted) }
 `
 
 /* ── Utils ── */
@@ -104,19 +89,28 @@ function ScoreBadge({ score }) {
   return <span className="mono text-xs font-bold px-2 py-0.5 rounded-lg" style={{background:'var(--surface2)',border:'1px solid var(--border)',color:'var(--muted)'}}>{score}<span style={{opacity:.5}}>/10</span></span>
 }
 
-function PlatformTag({ platform }) {
-  if (platform === 'vinted') return (
-    <span className="mono text-xs px-2 py-0.5 rounded-md font-bold flex items-center gap-1" style={{background:'rgba(9,177,186,.1)',border:'1px solid rgba(9,177,186,.25)',color:'var(--vinted)'}}>
+/* ── PlatformTag — détecte via listing_id en fallback si platform absent ── */
+function PlatformTag({ platform, listingId }) {
+  // Détection robuste : on se fie à platform EN PRIORITÉ,
+  // sinon on détecte via le préfixe du listing_id
+  const resolved = platform
+    || (listingId?.startsWith('vinted_') ? 'vinted' : 'leboncoin')
+
+  if (resolved === 'vinted') return (
+    <span className="mono text-xs px-2 py-0.5 rounded-md font-bold flex items-center gap-1"
+      style={{background:'rgba(9,177,186,.1)',border:'1px solid rgba(9,177,186,.25)',color:'var(--vinted)'}}>
       <i className="fas fa-shirt" style={{fontSize:9}} /> Vinted
     </span>
   )
-  if (platform === 'both') return (
-    <span className="mono text-xs px-2 py-0.5 rounded-md font-bold flex items-center gap-1" style={{background:'var(--accent-dim)',border:'1px solid var(--accent-border)',color:'var(--accent)'}}>
+  if (resolved === 'both') return (
+    <span className="mono text-xs px-2 py-0.5 rounded-md font-bold flex items-center gap-1"
+      style={{background:'var(--accent-dim)',border:'1px solid var(--accent-border)',color:'var(--accent)'}}>
       <i className="fas fa-layer-group" style={{fontSize:9}} /> Les deux
     </span>
   )
   return (
-    <span className="mono text-xs px-2 py-0.5 rounded-md font-bold flex items-center gap-1" style={{background:'rgba(255,107,0,.1)',border:'1px solid rgba(255,107,0,.25)',color:'var(--lbc)'}}>
+    <span className="mono text-xs px-2 py-0.5 rounded-md font-bold flex items-center gap-1"
+      style={{background:'rgba(255,107,0,.1)',border:'1px solid rgba(255,107,0,.25)',color:'var(--lbc)'}}>
       <i className="fas fa-tag" style={{fontSize:9}} /> Leboncoin
     </span>
   )
@@ -134,7 +128,6 @@ function SkFilter() {
   return <div className="rounded-2xl p-4 space-y-2" style={{background:'var(--surface)',border:'1px solid var(--border)'}}><div className="sk" style={{height:13,width:'40%'}}/><div className="sk" style={{height:11,width:'60%'}}/><div className="sk" style={{height:6,borderRadius:4}}/></div>
 }
 
-/* ── SVG Circle Progress ── */
 function CircleProgress({ pct, size=48, stroke=3 }) {
   const r = (size - stroke*2)/2; const circ = 2*Math.PI*r; const dash = (pct/100)*circ
   return (
@@ -146,7 +139,6 @@ function CircleProgress({ pct, size=48, stroke=3 }) {
   )
 }
 
-/* ── Countdown ── */
 function Countdown({ lastScanAt }) {
   const [, tick] = useState(0)
   useEffect(() => { const t = setInterval(() => tick(x=>x+1), 1000); return () => clearInterval(t) }, [])
@@ -169,7 +161,6 @@ function Countdown({ lastScanAt }) {
   )
 }
 
-/* ── StatCard ── */
 function StatCard({ icon, label, value, loading, green, accent }) {
   const [display, setDisplay] = useState(0)
   const prev = useRef(0)
@@ -196,7 +187,11 @@ function StatCard({ icon, label, value, loading, green, accent }) {
 
 /* ── Listing Card ── */
 function ListingCard({ listing }) {
-  const platColor = listing.platform==='vinted'?'var(--vinted)':listing.platform==='both'?'var(--accent)':'var(--lbc)'
+  // Résolution robuste de la plateforme (fallback sur listing_id)
+  const platform = listing.platform
+    || (listing.listing_id?.startsWith('vinted_') ? 'vinted' : 'leboncoin')
+  const platColor = platform==='vinted'?'var(--vinted)':platform==='both'?'var(--accent)':'var(--lbc)'
+
   return (
     <div className="au card rounded-2xl overflow-hidden" style={{background:'var(--surface)',border:'1px solid var(--border)'}}>
       <div style={{padding:16}}>
@@ -216,7 +211,7 @@ function ListingCard({ listing }) {
               {listing.seller_type&&<span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1" style={listing.seller_type==='pro'?{background:'rgba(59,130,246,.1)',border:'1px solid rgba(59,130,246,.2)',color:'#60a5fa'}:{background:'var(--surface2)',border:'1px solid var(--border)',color:'var(--muted)'}}>
                 <i className={`fas ${listing.seller_type==='pro'?'fa-building':'fa-user'}`} style={{fontSize:9}}/> {listing.seller_type==='pro'?'Pro':'Particulier'}
               </span>}
-              <PlatformTag platform={listing.platform}/>
+              <PlatformTag platform={listing.platform} listingId={listing.listing_id}/>
             </div>
           </div>
         </div>
@@ -227,7 +222,7 @@ function ListingCard({ listing }) {
               <div className="flex-1 h-px" style={{background:'var(--accent-border)'}}/>
             </div>
             <p className="text-xs leading-relaxed" style={{color:'#a8a8c0'}}>{listing.ai_analysis}</p>
-            {listing.ai_highlights?.length>0&&<div className="flex flex-wrap gap-1.5 mt-2">{listing.ai_highlights.map((h,i)=><span key={i} className="text-xs px-2 py-0.5 rounded-lg" style={{background:'var(--surface2)',border:'1px solid var(--border)',color:'var(--muted)'}}><i className="fas fa-check" style={{fontSize:8,marginRight:4}}/>{h}</span>)}</div>}
+            {listing.ai_highlights?.length>0&&<div className="flex flex-wrap gap-1.5 mt-2">{listing.ai_highlights.map((h,i)=><span key={i} className="text-xs px-2 py-0.5 rounded-lg" style={{background:'var(--surface2)',border:'1px solid var(--border)',color:'var(--muted)'}}>{h}</span>)}</div>}
           </div>
         )}
         <div className="flex items-center justify-between mt-3 pt-3" style={{borderTop:'1px solid var(--border)'}}>
@@ -250,10 +245,8 @@ function FilterCard({ filter, onDelete, onToggle, onScan }) {
   const [scanning, setScanning] = useState(false)
   const [, tick] = useState(0)
   useEffect(()=>{const t=setInterval(()=>tick(x=>x+1),1000);return()=>clearInterval(t)},[])
-
   async function handleScan() { setScanning(true); await onScan(filter.id); setScanning(false) }
   const info = getNextScan(filter.last_scan_at)
-
   return (
     <div className={`au card laser-card rounded-2xl ${filter.is_active?'active':''}`}
       style={{background:'var(--surface)',border:`1px solid ${scanning?'var(--accent-border)':'var(--border)'}`,position:'relative',overflow:'hidden'}}>
@@ -263,7 +256,7 @@ function FilterCard({ filter, onDelete, onToggle, onScan }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-3">
               <div style={{position:'relative',display:'inline-flex',flexShrink:0}}>
-                {filter.is_active&&<div style={{position:'absolute',inset:-3,borderRadius:'50%',background:filter.is_active?'var(--green)':'transparent',opacity:.35,animation:'pulse-r 2s ease-out infinite'}}/>}
+                {filter.is_active&&<div style={{position:'absolute',inset:-3,borderRadius:'50%',background:'var(--green)',opacity:.35,animation:'pulse-r 2s ease-out infinite'}}/>}
                 <div style={{width:8,height:8,borderRadius:'50%',background:filter.is_active?'var(--green)':'var(--muted2)'}}/>
               </div>
               <span className="syne font-bold text-sm truncate" style={{color:'var(--text)'}}>{filter.name}</span>
@@ -330,7 +323,6 @@ function NewFilterModal({ onClose, onCreated }) {
   const set = k => e => setForm(f=>({...f,[k]:e.target.value}))
   const iStyle = {width:'100%',background:'rgba(255,255,255,.04)',border:'1px solid var(--border)',borderRadius:10,padding:'9px 12px',fontSize:13,color:'var(--text)',outline:'none',transition:'border-color .2s,box-shadow .2s'}
   const lStyle = {display:'block',fontFamily:'JetBrains Mono',fontSize:10,color:'var(--muted)',textTransform:'uppercase',letterSpacing:2,marginBottom:6}
-
   async function submit(e) {
     e.preventDefault(); setLoading(true); setError('')
     try {
@@ -338,7 +330,6 @@ function NewFilterModal({ onClose, onCreated }) {
       onCreated(); onClose()
     } catch(err) { setError(err.message) } finally { setLoading(false) }
   }
-
   return (
     <div className="fade fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4" style={{background:'rgba(0,0,0,.85)',backdropFilter:'blur(10px)'}} onClick={onClose}>
       <div className="au w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{background:'var(--surface)',border:'1px solid var(--accent-border)'}} onClick={e=>e.stopPropagation()}>
@@ -415,7 +406,7 @@ function SiteBanner({ banner }) {
   )
 }
 
-/* ── Live Status Bar ── */
+/* ── StatusBar ── */
 function StatusBar({ filters, lastScans }) {
   const [now, setNow] = useState(new Date())
   useEffect(()=>{const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t)},[])
@@ -441,17 +432,15 @@ function StatusBar({ filters, lastScans }) {
   )
 }
 
-/* ══════════════════════════════════════════════
-   TABS
-══════════════════════════════════════════════ */
+/* ══ TABS ══ */
 function TabOverview({ stats, listings, loading }) {
   return (
     <div className="space-y-6 au">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon="fa-sliders" label="Filtres actifs" value={stats?.active_filters} loading={loading}/>
-        <StatCard icon="fa-magnifying-glass" label="Annonces analysées" value={stats?.total_analyzed} loading={loading}/>
-        <StatCard icon="fa-trophy" label="Bonnes affaires" value={stats?.good_deals_found} loading={loading} accent/>
-        <StatCard icon="fa-envelope" label="Alertes envoyées" value={stats?.alerts_sent} loading={loading} green/>
+        <StatCard icon="fa-sliders"         label="Filtres actifs"      value={stats?.active_filters}  loading={loading}/>
+        <StatCard icon="fa-magnifying-glass" label="Annonces analysées"  value={stats?.total_analyzed}  loading={loading}/>
+        <StatCard icon="fa-trophy"           label="Bonnes affaires"     value={stats?.good_deals_found} loading={loading} accent/>
+        <StatCard icon="fa-envelope"         label="Alertes envoyées"    value={stats?.alerts_sent}     loading={loading} green/>
       </div>
       <div>
         <div className="flex items-center gap-3 mb-4">
@@ -459,9 +448,11 @@ function TabOverview({ stats, listings, loading }) {
           <div className="flex-1 h-px" style={{background:'var(--border)'}}/>
           {!loading&&<span className="mono text-xs" style={{color:'var(--muted2)'}}>{listings.length} total</span>}
         </div>
-        {loading?<div className="space-y-3">{[1,2,3].map(i=><SkCard key={i}/>)}</div>
-          :listings.length===0?<div className="rounded-2xl p-14 text-center" style={{background:'var(--surface)',border:'1px dashed var(--border)'}}><i className="fas fa-inbox fa-2x mb-3" style={{color:'var(--muted2)',display:'block'}}/><div className="syne font-bold mb-1" style={{color:'var(--text)'}}>Aucune annonce</div><div className="text-sm" style={{color:'var(--muted)'}}>Lancez <i className="fas fa-bolt"/> Scanner sur un filtre pour commencer</div></div>
-          :<div className="space-y-3">{listings.slice(0,5).map(l=><ListingCard key={l.id} listing={l}/>)}</div>
+        {loading
+          ?<div className="space-y-3">{[1,2,3].map(i=><SkCard key={i}/>)}</div>
+          :listings.length===0
+            ?<div className="rounded-2xl p-14 text-center" style={{background:'var(--surface)',border:'1px dashed var(--border)'}}><i className="fas fa-inbox fa-2x mb-3" style={{color:'var(--muted2)',display:'block'}}/><div className="syne font-bold mb-1" style={{color:'var(--text)'}}>Aucune annonce</div><div className="text-sm" style={{color:'var(--muted)'}}>Lancez <i className="fas fa-bolt"/> Scanner sur un filtre pour commencer</div></div>
+            :<div className="space-y-3">{listings.slice(0,5).map(l=><ListingCard key={l.id} listing={l}/>)}</div>
         }
       </div>
     </div>
@@ -469,9 +460,9 @@ function TabOverview({ stats, listings, loading }) {
 }
 
 function TabFilters({ filters, onDelete, onToggle, onScan, onNew, loading }) {
-  const lbcCount = filters.filter(f=>f.platform==='leboncoin').length
+  const lbcCount    = filters.filter(f=>f.platform==='leboncoin').length
   const vintedCount = filters.filter(f=>f.platform==='vinted').length
-  const bothCount = filters.filter(f=>f.platform==='both').length
+  const bothCount   = filters.filter(f=>f.platform==='both').length
   return (
     <div className="au">
       <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
@@ -490,18 +481,23 @@ function TabFilters({ filters, onDelete, onToggle, onScan, onNew, loading }) {
           <i className="fas fa-plus"/> Nouveau filtre
         </button>
       </div>
-      {loading?<div className="space-y-3">{[1,2,3].map(i=><SkFilter key={i}/>)}</div>
-        :filters.length===0?<div className="rounded-2xl p-14 text-center" style={{background:'var(--surface)',border:'1px dashed var(--border)'}}><i className="fas fa-satellite-dish fa-2x mb-3" style={{color:'var(--muted2)',display:'block'}}/><div className="syne font-bold mb-1" style={{color:'var(--text)'}}>Aucun filtre</div><div className="text-sm mb-5" style={{color:'var(--muted)'}}>Créez votre premier filtre de surveillance</div><button onClick={onNew} style={{background:'var(--accent)',color:'#fff',padding:'10px 24px',borderRadius:12,fontSize:13,fontWeight:700,border:'none',cursor:'pointer'}}><i className="fas fa-plus" style={{marginRight:6}}/>Créer un filtre</button></div>
-        :<div className="space-y-3">{filters.map(f=><FilterCard key={f.id} filter={f} onDelete={onDelete} onToggle={onToggle} onScan={onScan}/>)}</div>
+      {loading
+        ?<div className="space-y-3">{[1,2,3].map(i=><SkFilter key={i}/>)}</div>
+        :filters.length===0
+          ?<div className="rounded-2xl p-14 text-center" style={{background:'var(--surface)',border:'1px dashed var(--border)'}}><i className="fas fa-satellite-dish fa-2x mb-3" style={{color:'var(--muted2)',display:'block'}}/><div className="syne font-bold mb-1" style={{color:'var(--text)'}}>Aucun filtre</div><div className="text-sm mb-5" style={{color:'var(--muted)'}}>Créez votre premier filtre de surveillance</div><button onClick={onNew} style={{background:'var(--accent)',color:'#fff',padding:'10px 24px',borderRadius:12,fontSize:13,fontWeight:700,border:'none',cursor:'pointer'}}><i className="fas fa-plus" style={{marginRight:6}}/>Créer un filtre</button></div>
+          :<div className="space-y-3">{filters.map(f=><FilterCard key={f.id} filter={f} onDelete={onDelete} onToggle={onToggle} onScan={onScan}/>)}</div>
       }
     </div>
   )
 }
 
 function TabListings({ listings, filters, minScore, setMinScore, loading }) {
-  const [fId, setFId] = useState('all')
+  const [fId, setFId]         = useState('all')
   const [platform, setPlatform] = useState('all')
-  const shown = listings.filter(l=>(fId==='all'||l.filter_id===fId)&&(platform==='all'||l.platform===platform))
+  const shown = listings.filter(l => {
+    const lPlatform = l.platform || (l.listing_id?.startsWith('vinted_') ? 'vinted' : 'leboncoin')
+    return (fId==='all'||l.filter_id===fId) && (platform==='all'||lPlatform===platform)
+  })
   const selStyle = {background:'var(--surface)',border:'1px solid var(--border)',color:'var(--muted)',fontSize:12,fontFamily:'JetBrains Mono',padding:'7px 12px',borderRadius:11,cursor:'pointer'}
   return (
     <div className="au">
@@ -524,9 +520,11 @@ function TabListings({ listings, filters, minScore, setMinScore, loading }) {
         </select>
         <span className="ml-auto mono text-xs" style={{color:'var(--muted2)'}}>{shown.length} résultat{shown.length>1?'s':''}</span>
       </div>
-      {loading?<div className="space-y-3">{[1,2,3,4].map(i=><SkCard key={i}/>)}</div>
-        :shown.length===0?<div className="rounded-2xl p-12 text-center" style={{background:'var(--surface)',border:'1px dashed var(--border)'}}><i className="fas fa-box-open fa-2x mb-3" style={{color:'var(--muted2)',display:'block'}}/><div className="syne font-bold mb-1" style={{color:'var(--text)'}}>Aucune annonce</div><div className="text-sm" style={{color:'var(--muted)'}}>Lancez <i className="fas fa-bolt"/> Scanner sur un filtre</div></div>
-        :<div className="space-y-3">{shown.map(l=><ListingCard key={l.id} listing={l}/>)}</div>
+      {loading
+        ?<div className="space-y-3">{[1,2,3,4].map(i=><SkCard key={i}/>)}</div>
+        :shown.length===0
+          ?<div className="rounded-2xl p-12 text-center" style={{background:'var(--surface)',border:'1px dashed var(--border)'}}><i className="fas fa-box-open fa-2x mb-3" style={{color:'var(--muted2)',display:'block'}}/><div className="syne font-bold mb-1" style={{color:'var(--text)'}}>Aucune annonce</div><div className="text-sm" style={{color:'var(--muted)'}}>Lancez <i className="fas fa-bolt"/> Scanner sur un filtre</div></div>
+          :<div className="space-y-3">{shown.map(l=><ListingCard key={l.id} listing={l}/>)}</div>
       }
     </div>
   )
@@ -574,7 +572,14 @@ function TabSettings({ user }) {
       </div>
       <div className="rounded-2xl p-5" style={{background:'var(--surface)',border:'1px solid var(--border)'}}>
         <div className="mono text-xs mb-4 flex items-center gap-2" style={{color:'var(--muted2)',letterSpacing:2}}><i className="fas fa-server"/>SYSTÈME</div>
-        {[{k:'SERVEUR',v:'Local — en ligne',ok:true},{k:'SCRAPER',v:'Leboncoin + Vinted'},{k:'SCAN',v:'Toutes les 60 min'},{k:'MODÈLE',v:'Llama 3.1 8B (Groq)'},{k:'BASE',v:'MongoDB Atlas'}].map(({k,v,ok})=>(
+        {[
+          {k:'SERVEUR', v:'Ubuntu — en ligne', ok:true},
+          {k:'SCRAPER', v:'Leboncoin + Vinted'},
+          {k:'SCAN',    v:'Toutes les 10 min'},
+          {k:'MODÈLE',  v:'Llama 3.3 70B (Groq)'},
+          {k:'MAIL',    v:'Brevo SMTP'},
+          {k:'BASE',    v:'MongoDB Atlas'},
+        ].map(({k,v,ok})=>(
           <div key={k} className="flex items-center gap-3 mono text-xs py-2.5" style={{borderBottom:'1px solid var(--border)'}}>
             <span className="w-20 flex-shrink-0" style={{color:'var(--muted2)'}}>{k}</span>
             <span className="flex-1" style={{color:'var(--muted)'}}>{v}</span>
@@ -593,9 +598,7 @@ function TabSettings({ user }) {
   )
 }
 
-/* ══════════════════════════════════════════════
-   MAIN
-══════════════════════════════════════════════ */
+/* ══ MAIN ══ */
 const TABS = [
   {id:'overview', label:"Vue d'ensemble", icon:'fa-chart-line'},
   {id:'filters',  label:'Filtres',        icon:'fa-satellite-dish'},
@@ -606,20 +609,19 @@ const TABS = [
 
 export default function Dashboard() {
   const user = getUser()
-  const [tab, setTab] = useState('overview')
-  const [stats, setStats] = useState(null)
-  const [filters, setFilters] = useState([])
+  const [tab, setTab]           = useState('overview')
+  const [stats, setStats]       = useState(null)
+  const [filters, setFilters]   = useState([])
   const [listings, setListings] = useState([])
-  const [alerts, setAlerts] = useState([])
+  const [alerts, setAlerts]     = useState([])
   const [showModal, setShowModal] = useState(false)
-  const [toast, setToast] = useState(null)
+  const [toast, setToast]       = useState(null)
   const [minScore, setMinScore] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [banner, setBanner] = useState(null)
+  const [loading, setLoading]   = useState(true)
+  const [banner, setBanner]     = useState(null)
 
   const showToast = (msg, ok=true) => { setToast({msg,ok}); setTimeout(()=>setToast(null),3500) }
 
-  // Charger la bannière/maintenance
   useEffect(() => {
     api.get('/admin/status').then(r=>setBanner(r)).catch(()=>{})
   }, [])
@@ -632,8 +634,10 @@ export default function Dashboard() {
         api.get(`/dashboard/listings?min_score=${minScore}&per_page=40`),
         api.get('/dashboard/alerts'),
       ])
-      if(s)setStats(s); if(f)setFilters(f)
-      if(l)setListings(l.listings||[]); if(a)setAlerts(a)
+      if(s) setStats(s)
+      if(f) setFilters(f)
+      if(l) setListings(l.listings||[])
+      if(a) setAlerts(a)
     } finally { setLoading(false) }
   }, [minScore])
 
@@ -654,16 +658,14 @@ export default function Dashboard() {
   }
 
   const recentAlerts = (alerts||[]).filter(a=>Date.now()-new Date(a.sent_at)<86400000).length
-  const lastScans = filters.filter(f=>f.last_scan_at).map(f=>f.last_scan_at)
-  const userName = user?.full_name||user?.email?.split('@')[0]||'vous'
-  const isAdmin = user?.is_admin
+  const lastScans    = filters.filter(f=>f.last_scan_at).map(f=>f.last_scan_at)
+  const userName     = user?.full_name||user?.email?.split('@')[0]||'vous'
+  const isAdmin      = user?.is_admin
 
   return (
     <div style={{minHeight:'100vh',background:'var(--bg)',color:'var(--text)'}}>
       <style>{STYLES}</style>
       <div className="grid-bg fixed inset-0 pointer-events-none" style={{opacity:.5}}/>
-
-      {/* Bannière admin */}
       <SiteBanner banner={banner}/>
 
       {/* NAV */}
@@ -705,11 +707,11 @@ export default function Dashboard() {
       {/* CONTENU */}
       <div style={{maxWidth:1100,margin:'0 auto',padding:'24px 20px 96px'}}>
         <StatusBar filters={filters} lastScans={lastScans}/>
-        {tab==='overview' &&<TabOverview stats={stats} listings={listings} loading={loading}/>}
-        {tab==='filters'  &&<TabFilters  filters={filters} onDelete={handleDelete} onToggle={handleToggle} onScan={handleScan} onNew={()=>setShowModal(true)} loading={loading}/>}
-        {tab==='listings' &&<TabListings listings={listings} filters={filters} minScore={minScore} setMinScore={setMinScore} loading={loading}/>}
-        {tab==='alerts'   &&<TabAlerts   alerts={alerts} loading={loading}/>}
-        {tab==='settings' &&<TabSettings user={user}/>}
+        {tab==='overview' &&<TabOverview  stats={stats}    listings={listings} loading={loading}/>}
+        {tab==='filters'  &&<TabFilters   filters={filters} onDelete={handleDelete} onToggle={handleToggle} onScan={handleScan} onNew={()=>setShowModal(true)} loading={loading}/>}
+        {tab==='listings' &&<TabListings  listings={listings} filters={filters} minScore={minScore} setMinScore={setMinScore} loading={loading}/>}
+        {tab==='alerts'   &&<TabAlerts    alerts={alerts}  loading={loading}/>}
+        {tab==='settings' &&<TabSettings  user={user}/>}
       </div>
 
       {tab==='filters'&&<button onClick={()=>setShowModal(true)} className="md:hidden active:scale-95" style={{position:'fixed',bottom:24,right:20,zIndex:40,width:56,height:56,background:'var(--accent)',color:'#fff',borderRadius:16,fontSize:22,border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 32px var(--accent-glow)'}}><i className="fas fa-plus"/></button>}
