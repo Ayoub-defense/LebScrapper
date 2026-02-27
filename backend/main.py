@@ -12,7 +12,7 @@ from .core.config import settings
 from .models.models import User, SearchFilter, Listing, Alert, SiteSettings
 from .routers import auth, filters, dashboard
 from .routers.admin import router as admin_router, init_settings, _cache
-from .services.scheduler import start_scheduler, stop_scheduler
+# from .services.scheduler import start_scheduler, stop_scheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -28,13 +28,13 @@ async def lifespan(app: FastAPI):
     )
     logger.info("✅ MongoDB connecté")
 
-    # Charge les settings depuis MongoDB dans le cache mémoire
+    # Charge les settings depuis MongoDB
     from .routers.admin import init_settings as _init
     await _init()
 
-    start_scheduler()
+    # start_scheduler()  <-- ICI ON AJOUTE LE #
     yield
-    stop_scheduler()
+    # stop_scheduler()   <-- ICI AUSSI
     client.close()
 
 
