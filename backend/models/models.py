@@ -22,12 +22,13 @@ class SearchFilter(Document):
     user_id: str
     name: str
     keywords: str
+    platform: str = "leboncoin"   # leboncoin | vinted | both
     category: Optional[str] = None
     city: Optional[str] = None
     max_price: Optional[float] = None
     min_price: float = 0
     radius_km: int = 30
-    min_score: float = 8.0   # ← peut aller de 1 à 10
+    min_score: float = Field(default=8.0, ge=1.0, le=10.0)
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_scan_at: Optional[datetime] = None
@@ -39,7 +40,8 @@ class SearchFilter(Document):
 class Listing(Document):
     filter_id: str
     user_id: str
-    listing_id: str
+    listing_id: str          # ID externe (leboncoin ou vinted)
+    platform: str = "leboncoin"
     title: str
     price: Optional[float] = None
     location: Optional[str] = None
@@ -69,3 +71,28 @@ class Alert(Document):
 
     class Settings:
         name = "alerts"
+
+
+# ── Paramètres globaux stockés en DB ──────────────────────────
+# Un seul document, clé "global", créé au premier démarrage.
+class SiteSettings(Document):
+    key: str = "global"
+
+    # Maintenance
+    maintenance_mode: bool = False
+    maintenance_message: str = "Le service est temporairement en maintenance. Merci de revenir plus tard."
+
+    # Bannière
+    banner_enabled: bool = False
+    banner_message: str = ""
+    banner_type: str = "info"      # info | warning | error
+
+    # Scraper
+    scraper_enabled: bool = True
+    scan_interval_minutes: int = 60
+    max_listings_per_scan: int = 20
+    min_score_global: float = 1.0  # 1 = tout passe
+
+    class Settings:
+        name = "site_settings"
+        indexes = [IndexModel([("key", ASCENDING)], unique=True)]

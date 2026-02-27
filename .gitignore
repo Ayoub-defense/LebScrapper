@@ -8,3 +8,5 @@ node_modules/
 frontend/dist/
 .DS_Store
 *.log
+vinted_scraper.py
+scraper.py
