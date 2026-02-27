@@ -305,7 +305,7 @@ function SectionData({onToast}){
       <div className="text-sm mb-4"style={{color:'var(--muted)'}}>Supprime les annonces trop anciennes pour libérer de l'espace.</div>
       <div className="flex flex-wrap gap-2 mb-2">
         {[7,14,30,60].map(d=><button key={d} onClick={()=>purge(`/admin/data/listings/old?days=${d}`,`listings_${d}`)} disabled={loading[`listings_${d}`]} style={btnStyle(d<=14)}>
-          {loading[`listings_${d}`]&&<Spinner size={11}/>}<i className="fas fa-clock"style={{fontSize:9}}/>> {d}j
+          {loading[`listings_${d}`]&&<Spinner size={11}/>}<i className="fas fa-clock"style={{fontSize:9}}/> {d}j
         </button>)}
         <button onClick={()=>{if(confirm('Supprimer TOUTES les annonces ?'))purge('/admin/data/all-listings','listings_all')}} disabled={loading.listings_all} style={btnStyle(true)}>
           {loading.listings_all&&<Spinner size={11}/>}<i className="fas fa-trash"/>Tout supprimer
@@ -320,7 +320,7 @@ function SectionData({onToast}){
       <div className="text-sm mb-4"style={{color:'var(--muted)'}}>Supprime l'historique des alertes email envoyées.</div>
       <div className="flex flex-wrap gap-2 mb-2">
         {[7,14,30,60].map(d=><button key={d} onClick={()=>purge(`/admin/data/alerts/old?days=${d}`,`alerts_${d}`)} disabled={loading[`alerts_${d}`]} style={btnStyle(d<=14)}>
-          {loading[`alerts_${d}`]&&<Spinner size={11}/>}<i className="fas fa-clock"style={{fontSize:9}}/>> {d}j
+          {loading[`alerts_${d}`]&&<Spinner size={11}/>}<i className="fas fa-clock"style={{fontSize:9}}/> {d}j
         </button>)}
       </div>
       {Object.entries(results).filter(([k])=>k.startsWith('alerts_')).map(([k,v])=><div key={k}className="mono text-xs mt-1 flex items-center gap-1"style={{color:'var(--green)'}}><i className="fas fa-check"/>{v}</div>)}
