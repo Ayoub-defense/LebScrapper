@@ -576,7 +576,7 @@ function TabSettings({ user }) {
           {k:'SERVEUR', v:'Ubuntu — en ligne', ok:true},
           {k:'SCRAPER', v:'Leboncoin + Vinted'},
           {k:'SCAN',    v:'Toutes les 10 min'},
-          {k:'MODÈLE',  v:'Llama 3.3 70B (Groq)'},
+          {k:'MODÈLE',  v:'Llama 3.1 8B (Groq)'},
           {k:'MAIL',    v:'Brevo SMTP'},
           {k:'BASE',    v:'MongoDB Atlas'},
         ].map(({k,v,ok})=>(
