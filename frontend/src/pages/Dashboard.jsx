@@ -71,8 +71,16 @@ function timeAgo(d) {
 }
 function getNextScan(last, intervalMin = 10) {
   if (!last) return null
-  const diff = Math.max(0, Math.floor((new Date(last).getTime() + intervalMin * 60000 - Date.now()) / 1000))
-  return { h: Math.floor(diff/3600), m: Math.floor((diff%3600)/60), s: diff%60, pct: Math.min(100, ((intervalMin*60 - diff)/(intervalMin*60))*100), done: diff === 0 }
+  const lastMs = new Date(last).getTime()
+  const intervalMs = intervalMin * 60000
+  const nextMs = lastMs + intervalMs
+  const now = Date.now()
+  const diff = Math.max(0, Math.floor((nextMs - now) / 1000))
+  const elapsed = Math.min(intervalMs, now - lastMs)
+  const pct = Math.min(100, (elapsed / intervalMs) * 100)
+  // "en cours" seulement si le scan vient de se terminer (moins de 30s)
+  const justFinished = diff === 0 && (now - lastMs) < 30000
+  return { h: Math.floor(diff/3600), m: Math.floor((diff%3600)/60), s: diff%60, pct, done: justFinished }
 }
 const pad = n => String(n).padStart(2,'0')
 
@@ -145,7 +153,7 @@ function Countdown({ lastScanAt }) {
   if (!lastScanAt) return <span className="mono text-xs" style={{color:'var(--muted)'}}>jamais scanné</span>
   const info = getNextScan(lastScanAt)
   if (!info) return null
-  if (info.done) return <div className="flex items-center gap-1"><Spinner size={11}/><span className="mono text-xs" style={{color:'var(--accent)'}}>en cours…</span></div>
+  if (info.done) return <div className="flex items-center gap-1"><Spinner size={11}/><span className="mono text-xs" style={{color:'var(--accent)'}}>scan en cours…</span></div>
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2">
