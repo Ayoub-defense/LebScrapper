@@ -71,15 +71,17 @@ function timeAgo(d) {
 }
 function getNextScan(last, intervalMin = 10) {
   if (!last) return null
-  const lastMs = new Date(last).getTime()
+  // new Date() parse correctement les ISO strings UTC (avec ou sans Z)
+  const lastStr = last.endsWith('Z') || last.includes('+') ? last : last + 'Z'
+  const lastMs = new Date(lastStr).getTime()
   const intervalMs = intervalMin * 60000
   const nextMs = lastMs + intervalMs
   const now = Date.now()
   const diff = Math.max(0, Math.floor((nextMs - now) / 1000))
   const elapsed = Math.min(intervalMs, now - lastMs)
   const pct = Math.min(100, (elapsed / intervalMs) * 100)
-  // "en cours" seulement si le scan vient de se terminer (moins de 30s)
-  const justFinished = diff === 0 && (now - lastMs) < 30000
+  // "scan en cours" seulement dans les 45s qui suivent le dernier scan
+  const justFinished = diff === 0 && (now - lastMs) < 45000
   return { h: Math.floor(diff/3600), m: Math.floor((diff%3600)/60), s: diff%60, pct, done: justFinished }
 }
 const pad = n => String(n).padStart(2,'0')
