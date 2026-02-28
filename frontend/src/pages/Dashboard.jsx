@@ -69,7 +69,7 @@ function timeAgo(d) {
   if (s < 86400) return `${Math.floor(s/3600)}h`
   return `${Math.floor(s/86400)}j`
 }
-function getNextScan(last, intervalMin = 60) {
+function getNextScan(last, intervalMin = 10) {
   if (!last) return null
   const diff = Math.max(0, Math.floor((new Date(last).getTime() + intervalMin * 60000 - Date.now()) / 1000))
   return { h: Math.floor(diff/3600), m: Math.floor((diff%3600)/60), s: diff%60, pct: Math.min(100, ((intervalMin*60 - diff)/(intervalMin*60))*100), done: diff === 0 }
