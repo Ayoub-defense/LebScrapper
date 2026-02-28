@@ -653,6 +653,14 @@ export default function Dashboard() {
 
   useEffect(()=>{ loadAll() },[loadAll])
 
+  // Polling automatique toutes les 30s pour rafraîchir last_scan_at
+  useEffect(() => {
+    const t = setInterval(() => {
+      api.get('/filters/').then(f => { if(f) setFilters(f) }).catch(()=>{})
+    }, 30000)
+    return () => clearInterval(t)
+  }, [])
+
   const handleDelete = async id => {
     if(!confirm('Supprimer ce filtre et ses annonces ?')) return
     try { await api.delete(`/filters/${id}`); await loadAll(); showToast('Filtre supprimé') }
